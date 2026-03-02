@@ -21,7 +21,18 @@ namespace Store.Core.Mapping.Products
 
             CreateMap<ProductBrand, TypeBrandDto>();
             CreateMap<ProductType, TypeBrandDto>();
+            CreateMap<TypeBrandDto, ProductType>();
+            CreateMap<TypeBrandDto, ProductBrand>();
+
             CreateMap<ProductsDto, Product>();
+
+            CreateMap<Product, CreateProductsDto>()
+                .ForMember(d => d.BrandName, options => options.MapFrom(s => s.Brand.Name))
+                .ForMember(d => d.TypeName, options => options.MapFrom(s => s.Type.Name));
+
+            CreateMap<CreateProductsDto, Product>();
+
+
 
         }
     }

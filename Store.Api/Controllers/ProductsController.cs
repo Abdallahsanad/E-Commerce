@@ -34,26 +34,6 @@ namespace Store.Api.Controllers
         }
 
 
-        [ProducesResponseType(typeof(IEnumerable<TypeBrandDto>), StatusCodes.Status200OK)]
-        [HttpGet("Brands")]
-        [Cached(5)]
-        public async Task<ActionResult<IEnumerable<TypeBrandDto>>> GetAllBrands()
-        {
-            var result=await _productService.GetAllBrandsAsync();
-            return Ok(result);
-        }
-
-
-        [ProducesResponseType(typeof(IEnumerable<TypeBrandDto>), StatusCodes.Status200OK)]
-        [HttpGet("Types")]
-        [Cached(5)]
-        public async Task<ActionResult<IEnumerable<TypeBrandDto>>> GetAllTypes()
-        {
-            var result=await _productService.GetAllTypesAsync();
-            return Ok(result);
-        }
-
-
 
         [ProducesResponseType(typeof(ProductsDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
@@ -69,6 +49,41 @@ namespace Store.Api.Controllers
            
         }
 
-        
+
+        [ProducesResponseType(typeof(ProductsDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [HttpPost]
+        public async Task<ActionResult<ProductsDto>> AddPrduct([FromForm] CreateProductsDto prouct)
+        {
+            if (prouct is null) return  BadRequest(new ApiErrorResponse(StatusCodes.Status400BadRequest));
+            var result=await _productService.AddProductAsync(prouct);
+            if (result is null) return BadRequest(new ApiErrorResponse(StatusCodes.Status400BadRequest));
+
+            return Ok(result);
+        }
+
+        [ProducesResponseType(typeof(IActionResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            var flag=await _productService.DeleteProductAsync(id);
+            if (flag is false) return NotFound(new ApiErrorResponse(StatusCodes.Status404NotFound));
+            return NoContent();
+        }
+
+
+        [ProducesResponseType(typeof(ProductsDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [HttpPut("{id}")]
+        public async Task<ActionResult<ProductsDto>> UpdateProduvt(int? id, [FromForm]CreateProductsDto productDto)
+        {
+            if(id is null) return BadRequest(new ApiErrorResponse(StatusCodes.Status400BadRequest));
+            var product= await _productService.UpdateProductAsync(id.Value, productDto);
+            if (product is null) return NotFound(new ApiErrorResponse(StatusCodes.Status404NotFound));
+            return Ok(product);
+        }
+       
     }
 }

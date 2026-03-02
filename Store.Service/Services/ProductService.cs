@@ -36,18 +36,7 @@ namespace Store.Service.Services
             return new PaginationResponse<ProductsDto>(productsSpec.pageSize, productsSpec.pageIndex, count,mapped);
 
         }
-        public async Task<IEnumerable<TypeBrandDto>> GetAllBrandsAsync()
-        {
-            return _mapper.Map<IEnumerable<TypeBrandDto>>(await _unitOfWork.Repository<ProductBrand, int>().GetAllAsync());
-        }
-
-
-        public async Task<IEnumerable<TypeBrandDto>> GetAllTypesAsync()
-        {
-            var Type=await _unitOfWork.Repository<ProductType,int>().GetAllAsync();
-            var mappedTypes=_mapper.Map<IEnumerable<TypeBrandDto>>(Type);
-            return mappedTypes;
-        }
+        
 
         public async Task<ProductsDto> GetProductByIdAsync(int id)
         {
@@ -58,6 +47,41 @@ namespace Store.Service.Services
             return maapedProduct;
         }
 
-       
+        
+
+        public async Task<ProductsDto> AddProductAsync(CreateProductsDto product)
+        {
+            if (product is null) return null;
+            var mappedProduct = _mapper.Map<Product>(product);
+            await _unitOfWork.Repository<Product, int>().AddAsync(mappedProduct);
+            var result = await _unitOfWork.CompleteAsync();
+            if (result <= 0) return null;
+            return _mapper.Map<ProductsDto>(mappedProduct);
+        }
+
+        
+
+
+        public async Task<bool> DeleteProductAsync(int id)
+        { 
+            var product= await _unitOfWork.Repository<Product, int>().GetByIdAsync(id);
+            if (product is null) return false;
+            _unitOfWork.Repository<Product,int>().Delete(product);
+            var deleted=await _unitOfWork.CompleteAsync();  
+            if (deleted <= 0) return false;
+            return deleted>0;
+        }
+
+        public async Task<ProductsDto> UpdateProductAsync(int id, CreateProductsDto productDto)
+        {
+            var product = await _unitOfWork.Repository<Product, int>().GetByIdAsync(id);
+            if (product is null) return null;
+            _mapper.Map(productDto, product);
+            _unitOfWork.Repository<Product, int>().Update(product);
+            var result=await _unitOfWork.CompleteAsync();
+            if (result<=0) return null;
+            var mapped=_mapper.Map<ProductsDto>(product);
+            return mapped;
+        }
     }
 }

@@ -1,14 +1,17 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
 using Store.Api.Errors;
+using Store.Core.Entities.Identity;
 using Store.Core.Mapping.Basket;
 using Store.Core.Mapping.Products;
 using Store.Core.Repositories.Contract;
 using Store.Core.Services.Contract;
 using Store.Repository;
 using Store.Repository.Data.Context;
+using Store.Repository.Identity.Context;
 using Store.Repository.Repositories;
 using Store.Service.Services;
 using Store.Service.Services.Caches;
@@ -27,6 +30,7 @@ namespace Store.Api.Helper
             services.AddAutoMapperService(configuration);
             services.ConfigInvalidModelStateResponseService();
             services.AddRedisService(configuration);
+            services.AddIdentityService();
             return services;
         }
         private static IServiceCollection AddBuiltInService(this IServiceCollection services)
@@ -48,12 +52,20 @@ namespace Store.Api.Helper
             {
                 option.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
             });
+
+            services.AddDbContext<StoreIdentityDbContext>(option =>
+            {
+                option.UseSqlServer(configuration.GetConnectionString("IdentityConnection"));
+            });
+            
             return services;
         }
 
         private static IServiceCollection AddUserDefinedService(this IServiceCollection services)
         {
             services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<IBrandService, BrandService>();
+            services.AddScoped<ITypeService, TypeService>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IBasketRepository,BasketRepository>();
             services.AddScoped<IBasketService, BasketService>();
@@ -99,5 +111,14 @@ namespace Store.Api.Helper
 
             return services;
         }
+
+        private static IServiceCollection AddIdentityService(this IServiceCollection services)
+        {
+            services.AddIdentity<AppUser, IdentityRole>()
+                .AddEntityFrameworkStores<StoreIdentityDbContext>()
+                .AddSignInManager<SignInManager<AppUser>>();
+            return services;
+        }
+
     }
 }

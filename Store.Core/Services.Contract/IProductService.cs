@@ -13,14 +13,13 @@ namespace Store.Core.Services.Contract
     public interface IProductService
     {
         Task<PaginationResponse<ProductsDto>> GetAllProductsAsync(ProductsSpecParams productsSpec);
-        Task<IEnumerable<TypeBrandDto>> GetAllTypesAsync();
-        Task<IEnumerable<TypeBrandDto>> GetAllBrandsAsync();
 
         Task<ProductsDto> GetProductByIdAsync(int id);
+        Task<ProductsDto> AddProductAsync(CreateProductsDto product);
 
+        Task<bool> DeleteProductAsync(int id);
 
-
-
+        Task<ProductsDto> UpdateProductAsync(int id, CreateProductsDto productDto);
 
     }
 }
