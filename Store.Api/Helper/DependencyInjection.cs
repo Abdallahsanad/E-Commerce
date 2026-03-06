@@ -1,20 +1,28 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using Store.Api.Errors;
 using Store.Core.Entities.Identity;
+using Store.Core.Mapping.Auth;
 using Store.Core.Mapping.Basket;
 using Store.Core.Mapping.Products;
 using Store.Core.Repositories.Contract;
 using Store.Core.Services.Contract;
+using Store.Core.Services.Contract.Auth;
 using Store.Repository;
 using Store.Repository.Data.Context;
 using Store.Repository.Identity.Context;
 using Store.Repository.Repositories;
 using Store.Service.Services;
 using Store.Service.Services.Caches;
+using Store.Service.Services.Token;
+using Store.Service.Services.Users;
+using System.Text;
 
 namespace Store.Api.Helper
 {
@@ -31,6 +39,7 @@ namespace Store.Api.Helper
             services.ConfigInvalidModelStateResponseService();
             services.AddRedisService(configuration);
             services.AddIdentityService();
+            services.AddAuthenticationService(configuration);
             return services;
         }
         private static IServiceCollection AddBuiltInService(this IServiceCollection services)
@@ -70,6 +79,8 @@ namespace Store.Api.Helper
             services.AddScoped<IBasketRepository,BasketRepository>();
             services.AddScoped<IBasketService, BasketService>();
             services.AddSingleton<ICacheService, CacheService>();
+            services.AddScoped<IUserService,UserService>();
+            services.AddScoped<ITokenService, TokenService>();
             return services;
         }
 
@@ -77,6 +88,7 @@ namespace Store.Api.Helper
         {
             services.AddAutoMapper(m => m.AddProfile(new ProductProfile(configuration)));
             services.AddAutoMapper(m => m.AddProfile(new BasketProfile()));
+            services.AddAutoMapper(m=>m.AddProfile(new AddressProfile()));
             return services;
         }
 
@@ -119,6 +131,30 @@ namespace Store.Api.Helper
                 .AddSignInManager<SignInManager<AppUser>>();
             return services;
         }
+
+        private static IServiceCollection AddAuthenticationService(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            options.TokenValidationParameters = new TokenValidationParameters()
+            {
+                ValidateIssuer = true,
+                ValidIssuer = configuration["Jwt:Issuer"],
+                ValidateAudience = true,
+                ValidAudience = configuration["Jwt:Audience"],
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]))
+            });
+
+            return services;
+        }
+
+        
+
 
     }
 }
