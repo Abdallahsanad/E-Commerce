@@ -10,6 +10,7 @@ using Store.Api.Errors;
 using Store.Core.Entities.Identity;
 using Store.Core.Mapping.Auth;
 using Store.Core.Mapping.Basket;
+using Store.Core.Mapping.Orders;
 using Store.Core.Mapping.Products;
 using Store.Core.Repositories.Contract;
 using Store.Core.Services.Contract;
@@ -20,6 +21,7 @@ using Store.Repository.Identity.Context;
 using Store.Repository.Repositories;
 using Store.Service.Services;
 using Store.Service.Services.Caches;
+using Store.Service.Services.Orders;
 using Store.Service.Services.Token;
 using Store.Service.Services.Users;
 using System.Text;
@@ -81,6 +83,8 @@ namespace Store.Api.Helper
             services.AddSingleton<ICacheService, CacheService>();
             services.AddScoped<IUserService,UserService>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IOrderService, OrderService>();
+
             return services;
         }
 
@@ -89,6 +93,7 @@ namespace Store.Api.Helper
             services.AddAutoMapper(m => m.AddProfile(new ProductProfile(configuration)));
             services.AddAutoMapper(m => m.AddProfile(new BasketProfile()));
             services.AddAutoMapper(m=>m.AddProfile(new AddressProfile()));
+            services.AddAutoMapper(m=>m.AddProfile(new OrderProfile(configuration)));
             return services;
         }
 

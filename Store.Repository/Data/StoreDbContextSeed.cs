@@ -1,4 +1,5 @@
 ﻿using Store.Core.Entities;
+using Store.Core.Entities.Order;
 using Store.Repository.Data.Context;
 using System;
 using System.Collections.Generic;
@@ -51,6 +52,22 @@ namespace Store.Repository.Data
                     await _context.SaveChangesAsync();
                 }
             }
+
+
+
+            if (_context.DeliveryMethods.Count() == 0)
+            {
+                var deliveryData = File.ReadAllText(@"..\Store.Repository\Data\DataSeed\delivery.json");
+
+                var delivery = JsonSerializer.Deserialize<List<DeliveryMethod>>(deliveryData);
+
+                if (delivery is not null && delivery.Count() > 0)
+                {
+                    await _context.DeliveryMethods.AddRangeAsync(delivery);
+                    await _context.SaveChangesAsync();
+                }
+            }
+
         }
     }
 }
