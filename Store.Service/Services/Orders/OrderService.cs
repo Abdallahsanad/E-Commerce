@@ -15,15 +15,18 @@ namespace Store.Service.Services.Orders
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IBasketService _basketService;
+        private readonly IPaymentService _paymentService;
 
         public OrderService
             (
             IUnitOfWork unitOfWork,
-            IBasketService basketService
+            IBasketService basketService,
+            IPaymentService paymentService
             )
         {
             _unitOfWork = unitOfWork;
             _basketService = basketService;
+            _paymentService = paymentService;
         }
 
         public async Task<Order> CreateOrderAsync(string buyerEmail, string basketId, int deliveryMethodId, Address shippingAddress)
@@ -44,7 +47,26 @@ namespace Store.Service.Services.Orders
             }
             var deliveryMethod=await _unitOfWork.Repository<DeliveryMethod,int>().GetByIdAsync(deliveryMethodId);
             var supTotal=orderItems.Sum(i=>i.Price * i.Quantity);
-            var order = new Order(buyerEmail,shippingAddress, deliveryMethodId, deliveryMethod, orderItems, supTotal,"");
+
+
+            //من اول هنا ده الي عملته بعد ما عملت ال paymentservice
+
+            if (!string.IsNullOrEmpty(basket.PaymentIntentId))
+            {
+                var spec = new OrderSpecificationWithPaymentIntentId(basket.PaymentIntentId);
+                var ExOrder=await _unitOfWork.Repository<Order,int>().GetByIdWithSpecAsync(spec);
+                if (ExOrder is not null)
+                {
+                    _unitOfWork.Repository<Order, int>().Delete(ExOrder);
+                }
+                
+            }
+
+            var basketDto=await _paymentService.CreateOrUpdatePaymentIntentIdAsync(basketId);
+
+            //لغاية هنا وخد الي عملته حطيته تحت
+
+            var order = new Order(buyerEmail,shippingAddress, deliveryMethodId, deliveryMethod, orderItems, supTotal, basketDto.PaymentIntentId);
             await _unitOfWork.Repository<Order,int>().AddAsync(order);
             var result=await _unitOfWork.CompleteAsync();
             if (result <= 0) return null;

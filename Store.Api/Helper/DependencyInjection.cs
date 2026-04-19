@@ -22,6 +22,7 @@ using Store.Repository.Repositories;
 using Store.Service.Services;
 using Store.Service.Services.Caches;
 using Store.Service.Services.Orders;
+using Store.Service.Services.Payments;
 using Store.Service.Services.Token;
 using Store.Service.Services.Users;
 using System.Text;
@@ -84,6 +85,7 @@ namespace Store.Api.Helper
             services.AddScoped<IUserService,UserService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<IPaymentService, PaymentService>();
 
             return services;
         }
